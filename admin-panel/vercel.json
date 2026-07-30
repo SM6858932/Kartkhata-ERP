@@ -1,0 +1,8 @@
+{
+  "git": true,
+  "framework": "nextjs",
+  "installCommand": "cd admin-panel && npm install",
+  "buildCommand": "cd admin-panel && npm run build",
+  "outputDirectory": "admin-panel/.next",
+  "ignoreCommand": "cd admin-panel"
+}

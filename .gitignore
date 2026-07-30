@@ -1,0 +1,17 @@
+node_modules/
+dist/
+serviceAccountKey.json
+.env
+*.local
+foodcart-khata-firebase-adminsdk*.json
+.agentbridge/
+.ai/
+.agents/
+.claude/
+.junie/
+.idea/
+backups/
+*.zip
+dataconnect-debug.log
+.dataconnect/
+android/app/google-services.json
