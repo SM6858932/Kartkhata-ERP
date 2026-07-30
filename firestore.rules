@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isCollector() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'collector';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAssignedToVendor(vendorId) {
+      return isCollector() && 
+        vendorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedVendorIds;
+    }
+
+    function canAccessVendor(vendorId) {
+      return isAdmin() || isAssignedToVendor(vendorId);
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    match /vendors/{vendorId} {
+      allow read: if isAuthenticated() && canAccessVendor(vendorId);
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isAssignedToVendor(vendorId) && 
+        request.resource.diff(resource.data).affectedKeys()
+          .hasOnly(['currentLat', 'currentLng', 'lastLocationAddress', 'lastLocationUpdateAt']));
+      allow delete: if isAdmin();
+    }
+
+    match /carts/{cartId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isCollector() && 
+        request.resource.diff(resource.data).affectedKeys()
+          .hasOnly(['currentLat', 'currentLng', 'lastLocationAddress', 'lastLocationUpdateAt']));
+      allow delete: if isAdmin();
+    }
+
+    match /agreements/{agreementId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        isAssignedToVendor(get(/databases/$(database)/documents/agreements/$(agreementId)).data.vendorId)
+      );
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (
+        isCollector() && 
+        request.resource.diff(resource.data).affectedKeys().hasOnly(['carriedBalance']) &&
+        isAssignedToVendor(resource.data.vendorId)
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() && (
+        isAdmin() || 
+        isAssignedToVendor(get(/databases/$(database)/documents/payments/$(paymentId)).data.vendorId)
+      );
+      allow create: if isAuthenticated() && (
+        isAdmin() || 
+        isAssignedToVendor(request.resource.data.vendorId)
+      );
+      allow update: if isAdmin() || (
+        isCollector() && 
+        request.resource.diff(resource.data).affectedKeys().hasOnly(['receiptSent'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (
+        isAuthenticated() && 
+        request.resource.diff(resource.data).affectedKeys().hasOnly(['read'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /zones/{zoneId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /partnerLeads/{leadId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

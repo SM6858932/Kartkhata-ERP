@@ -2,8 +2,8 @@ node_modules/
 dist/
 serviceAccountKey.json
 .env
+.env.local
 *.local
-foodcart-khata-firebase-adminsdk*.json
 .agentbridge/
 .ai/
 .agents/
@@ -15,3 +15,6 @@ backups/
 dataconnect-debug.log
 .dataconnect/
 android/app/google-services.json
+foodcart-khata-firebase-adminsdk-*.json
+skills-lock.json
+pglite-debug.log
