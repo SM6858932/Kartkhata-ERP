@@ -2,7 +2,6 @@ node_modules/
 dist/
 serviceAccountKey.json
 .env
-.env.local
 *.local
 .agentbridge/
 .ai/

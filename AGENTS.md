@@ -100,8 +100,18 @@ If any deletion or cleanup is needed → **ask the user first**. No exceptions.
 ### Backup Protocol
 
 Before any destructive git operation (filter-repo, reset --hard, branch -D, etc.):
-1. Create a full project backup: run `.\create-backup.ps1` from project root (or ask user to)
+1. Create a full project backup
 2. Wait for user confirmation before proceeding
+
+## Vercel Deployment
+
+This repo deploys to Vercel as a Vite SPA from the root (for the admin panel website):
+
+- **vercel.json** at root configures SPA rewrites and build command
+- Build: `npm run build` (runs `tsc && vite build`)
+- Output directory: `dist`
+- Env vars (set in Vercel dashboard): `VITE_FIREBASE_*` from `.env.example`
+- The `admin-panel/` Next.js app has its own `vercel.json` for separate deployment
 
 ## Commit Style
 
