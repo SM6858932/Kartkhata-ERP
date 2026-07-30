@@ -81,6 +81,28 @@ Key entities: `User` (admin/collector), `Vendor`, `Cart` (rented/available/maint
 - **Collectors** only see assigned vendors (`currentUser.assignedVendorIds`)
 - **Firestore sync** — `useFirestoreSync` hook in `src/hooks/` handles real-time + offline cache
 
+## ⚠️ CRITICAL SAFETY RULE: NEVER DELETE WORKING TREE FILES
+
+**NEVER delete, remove, or modify any file or directory from the working tree (disk) without
+explicit user permission.** This applies to:
+
+- Source files (`src/`, `admin-panel/`, `android/`, etc.)
+- Config files, scripts, assets
+- Any file or folder created by the user or by any previous agent session
+
+This rule is absolute. Even if:
+- Files seem like junk, duplicates, or test artifacts
+- Git filter operations or cleanup scripts are needed
+- A previous operation left files in a bad state
+
+If any deletion or cleanup is needed → **ask the user first**. No exceptions.
+
+### Backup Protocol
+
+Before any destructive git operation (filter-repo, reset --hard, branch -D, etc.):
+1. Create a full project backup: run `.\create-backup.ps1` from project root (or ask user to)
+2. Wait for user confirmation before proceeding
+
 ## Commit Style
 
 - Use conventional messages: `feat:`, `fix:`, `refactor:`, `style:`, `chore:`, `docs:`
