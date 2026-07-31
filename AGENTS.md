@@ -1,5 +1,16 @@
 # CartKhata ERP — Agent Guidelines
 
+## ⚠️ CRITICAL COMMUNICATION RULE: NO LONG STORIES
+
+**NEVER write long history/recap paragraphs in chat.** Do not repeat past events, explain the
+app's backstory, or narrate what you did before. Stay focused on the current task only.
+
+- Be concise: short answers, direct statements, then act.
+- When the user reports a problem, investigate + fix it — do not re-explain their own issue back
+  to them at length.
+- No filler, no storytelling, no "as you know, the app works like this…". Fix, don't narrate.
+- Time is money — every wasted sentence is wasted user time.
+
 ## Project Overview
 
 CartKhata is a Food Cart Rent Manager ERP — a cross-platform mobile app (React + Capacitor +
