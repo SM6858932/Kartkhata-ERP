@@ -3,7 +3,7 @@ import { auth, db, storage, serverTimestamp } from '@/lib/firebase-admin';
 
 export async function GET() {
   try {
-    const snapshot = await db.collection('companies').orderBy('createdAt', 'desc').get();
+    const snapshot = await db().collection('companies').orderBy('createdAt', 'desc').get();
     const companies = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
     return NextResponse.json({ success: true, data: companies });
   } catch (err: any) {
@@ -26,12 +26,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    const companyRef = db.collection('companies').doc();
+    const companyRef = db().collection('companies').doc();
     const companyId = companyRef.id;
 
     let logoUrl = '';
     if (logoFile && logoFile.size > 0) {
-      const bucket = storage.bucket();
+      const bucket = storage().bucket();
       const ext = logoFile.name.split('.').pop() || 'png';
       const fileName = `companies/${companyId}/logo.${ext}`;
       const file = bucket.file(fileName);
@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
       createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
     });
 
-    const adminRecord = await auth.createUser({
+    const adminRecord = await auth().createUser({
       email: adminEmail, password: adminPassword,
       displayName: `${ownerName} (Admin)`, phoneNumber: adminPhone,
     });
 
-    await db.collection('users').doc(adminRecord.uid).set({
+    await db().collection('users').doc(adminRecord.uid).set({
       name: `${ownerName} (Admin)`, phone: adminPhone, email: adminEmail,
       role: 'company_admin', companyId, active: true,
       assignedVendorIds: [], createdAt: serverTimestamp(),

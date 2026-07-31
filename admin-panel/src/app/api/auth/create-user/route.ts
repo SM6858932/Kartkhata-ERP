@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const userEmail = email || `${name.toLowerCase().replace(/\s+/g, '')}@cartkhata.com`;
 
-        const userRecord = await auth.createUser({
+        const userRecord = await auth().createUser({
             email: userEmail,
             password,
             displayName: name,
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
             disabled: false,
         });
 
-        await db.collection('users').doc(userRecord.uid).set({
+        await db().collection('users').doc(userRecord.uid).set({
             name,
             phone,
             email: userEmail,

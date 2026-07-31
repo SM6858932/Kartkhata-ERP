@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminLayout from '../admin-layout';
+import AdminLayout from '../../admin-layout';
 import { ArrowLeft, Building2, Upload, CheckCircle2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 

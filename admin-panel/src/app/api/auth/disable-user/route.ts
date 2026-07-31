@@ -8,8 +8,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'uid required' }, { status: 400 });
     }
 
-    await auth.updateUser(uid, { disabled: true });
-    await db.collection('users').doc(uid).update({ active: false, updatedAt: serverTimestamp() });
+    await auth().updateUser(uid, { disabled: true });
+    await db().collection('users').doc(uid).update({ active: false, updatedAt: serverTimestamp() });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

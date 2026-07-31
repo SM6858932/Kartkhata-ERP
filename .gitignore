@@ -17,3 +17,4 @@ android/app/google-services.json
 foodcart-khata-firebase-adminsdk-*.json
 skills-lock.json
 pglite-debug.log
+.vercel

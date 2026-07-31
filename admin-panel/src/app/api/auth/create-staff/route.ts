@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const email = `${name.toLowerCase().replace(/\s+/g, '')}_staff@cartkhata.com`;
 
-        const userRecord = await auth.createUser({
+        const userRecord = await auth().createUser({
             email,
             password,
             displayName: name,
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
         });
 
         const { db, serverTimestamp } = await import('@/lib/firebase-admin');
-        await db.collection('users').doc(userRecord.uid).set({
+        await db().collection('users').doc(userRecord.uid).set({
             name, phone, email,
             role: 'collector',
             companyId,

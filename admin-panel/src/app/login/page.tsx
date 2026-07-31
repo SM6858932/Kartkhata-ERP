@@ -19,6 +19,7 @@ export default function LoginPage() {
     try {
       const userCred = await signInWithEmailAndPassword(auth, email, password);
       localStorage.setItem('adminSession', JSON.stringify({ uid: userCred.user.uid }));
+      document.cookie = `adminSession=${userCred.user.uid}; path=/; max-age=86400; samesite=lax`;
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Login failed');

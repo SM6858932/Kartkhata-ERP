@@ -4,7 +4,7 @@ import { db, serverTimestamp } from '@/lib/firebase-admin';
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         const body = await req.json();
-        await db.collection('companies').doc(params.id).update({
+        await db().collection('companies').doc(params.id).update({
             ...body,
             updatedAt: serverTimestamp(),
         });

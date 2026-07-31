@@ -91,6 +91,7 @@ explicit user permission.** This applies to:
 - Any file or folder created by the user or by any previous agent session
 
 This rule is absolute. Even if:
+
 - Files seem like junk, duplicates, or test artifacts
 - Git filter operations or cleanup scripts are needed
 - A previous operation left files in a bad state
@@ -100,6 +101,7 @@ If any deletion or cleanup is needed → **ask the user first**. No exceptions.
 ### Backup Protocol
 
 Before any destructive git operation (filter-repo, reset --hard, branch -D, etc.):
+
 1. Create a full project backup
 2. Wait for user confirmation before proceeding
 
