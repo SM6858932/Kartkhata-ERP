@@ -1,4 +1,5 @@
 import { Client, Storage, ID } from 'node-appwrite';
+import { InputFile } from 'node-appwrite/file';
 
 const endpoint = process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
 const projectId = process.env.APPWRITE_PROJECT_ID || '';
@@ -21,7 +22,7 @@ function getStorage(): Storage {
 export async function uploadLogo(
     companyId: string,
     file: Buffer,
-    mimeType: string,
+    _mimeType: string,
     fileName: string
 ): Promise<string> {
     const storageClient = getStorage();
@@ -29,11 +30,12 @@ export async function uploadLogo(
     const ext = fileName.split('.').pop() || 'png';
     const finalFileName = `companies/${companyId}/logo.${ext}`;
 
+    const inputFile = InputFile.fromBuffer(file, finalFileName);
+
     const result = await storageClient.createFile(
         bucketId,
         fileId,
-        new Blob([file], { type: mimeType }),
-        finalFileName
+        inputFile
     );
 
     return `https://${endpoint}/storage/buckets/${bucketId}/files/${result.$id}/view?project=${projectId}`;
