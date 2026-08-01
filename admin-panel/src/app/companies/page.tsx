@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Building2, Plus, ExternalLink, Trash2 } from 'lucide-react';
 import AdminLayout from '../admin-layout';
 import Link from 'next/link';
+import { normalizeLogoUrl } from '@/lib/logoUrl';
 
 interface Company {
   id: string;
@@ -66,7 +67,7 @@ export default function CompaniesPage() {
               <div key={c.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 hover:border-slate-700 transition">
                 <div className="flex items-center gap-3">
                   {c.logoUrl ? (
-                    <img src={c.logoUrl} alt={c.name} className="w-12 h-12 rounded-xl object-cover border border-slate-700" />
+                    <img src={normalizeLogoUrl(c.logoUrl)} alt={c.name} className="w-12 h-12 rounded-xl object-cover border border-slate-700" />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center">
                       <Building2 className="w-5 h-5 text-slate-500" />

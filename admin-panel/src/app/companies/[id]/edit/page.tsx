@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import AdminLayout from '../../../admin-layout';
 import { ArrowLeft, Building2, Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { normalizeLogoUrl } from '@/lib/logoUrl';
 
 export default function EditCompanyPage() {
     const { id } = useParams<{ id: string }>();
@@ -80,7 +81,7 @@ export default function EditCompanyPage() {
                         {logoPreview && (
                             <div>
                                 <label className="text-xs font-semibold text-slate-300 block mb-1">Current Logo</label>
-                                <img src={logoPreview} alt="logo" className="h-12 rounded-lg" />
+                                <img src={normalizeLogoUrl(logoPreview)} alt="logo" className="h-12 rounded-lg" />
                             </div>
                         )}
                         <button type="submit" disabled={saving}
