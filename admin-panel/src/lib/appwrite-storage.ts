@@ -1,7 +1,9 @@
 import { Client, Storage, ID } from 'node-appwrite';
 import { InputFile } from 'node-appwrite/file';
 
-const endpoint = process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
+const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
+const endpoint = rawEndpoint.replace(/^https?:\/\//, '');
+const endpointUrl = `https://${endpoint}`;
 const projectId = process.env.APPWRITE_PROJECT_ID || '';
 const apiKey = process.env.APPWRITE_API_KEY || '';
 const bucketId = process.env.APPWRITE_BUCKET_ID || '';
@@ -11,7 +13,7 @@ let storage: Storage | null = null;
 function getStorage(): Storage {
     if (!storage) {
         const client = new Client()
-            .setEndpoint(endpoint)
+            .setEndpoint(endpointUrl)
             .setProject(projectId)
             .setKey(apiKey);
         storage = new Storage(client);
