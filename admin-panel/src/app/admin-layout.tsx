@@ -1,23 +1,39 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LayoutDashboard, Building2, Users, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { getSession, clearSession } from '@/lib/session';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const session = getSession();
+  const isSuperAdmin = session.role === 'super_admin';
+
+  useEffect(() => {
+    if (pathname.startsWith('/companies') && !isSuperAdmin) {
+      router.replace('/');
+    }
+  }, [pathname, isSuperAdmin, router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('adminSession');
+    clearSession();
     router.push('/login');
   };
 
-  const navItems = [
-    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/companies', label: 'Companies', icon: Building2 },
-  ];
+  const navItems = isSuperAdmin
+    ? [
+        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/companies', label: 'Companies', icon: Building2 },
+      ]
+    : [
+        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+      ];
+
+  const displayName = session.name?.replace(/ \(Admin\)$/, '') || session.uid || 'Admin';
 
   return (
     <div className="flex min-h-screen">
@@ -25,6 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-5 border-b border-slate-800">
           <h1 className="text-lg font-black text-orange-400 font-outfit">CartKhata</h1>
           <p className="text-[10px] text-slate-500 uppercase tracking-wider">Admin Panel</p>
+          <p className="mt-2 text-xs text-slate-400 truncate">{displayName}</p>
         </div>
         <nav className="p-4 space-y-1">
           {navItems.map(item => (

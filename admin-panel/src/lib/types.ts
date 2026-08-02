@@ -1,9 +1,10 @@
-export interface Company {
+﻿export interface Company {
   id: string;
   name: string;
   ownerName: string;
   logoUrl: string;
   address?: string;
+  ownerMobile?: string;
   phone?: string;
   email?: string;
   active: boolean;

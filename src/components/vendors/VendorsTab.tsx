@@ -23,16 +23,21 @@ export const VendorsTab: React.FC<VendorsTabProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Filter vendors by assignment for Collectors / Staff (Req 3)
+  const visibleVendors = (currentUser.role === 'collector' || currentUser.role === 'staff')
+    ? vendors.filter(v => currentUser.assignedVendorIds.includes(v.id))
+    : vendors;
+
   const filtered = useMemo(() => {
-    if (!searchTerm.trim()) return vendors;
+    if (!searchTerm.trim()) return visibleVendors;
     const q = searchTerm.toLowerCase();
-    return vendors.filter(v =>
+    return visibleVendors.filter(v =>
       v.fullName.toLowerCase().includes(q) ||
       v.phone.includes(q) ||
       v.address.toLowerCase().includes(q) ||
       v.areaTag?.toLowerCase().includes(q)
     );
-  }, [searchTerm, vendors]);
+  }, [searchTerm, visibleVendors]);
 
   return (
     <div className="space-y-4 pb-28 animate-fade-in">

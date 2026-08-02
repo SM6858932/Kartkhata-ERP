@@ -1,4 +1,4 @@
-rules_version = '2';
+﻿rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -7,114 +7,190 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    function isSuperAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
     }
 
     function isCollector() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'collector';
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['collector', 'staff'];
     }
 
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+    function isCompanyMember(companyId) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+    }
+
+    function isCompanyAdmin(companyId) {
+      return isCompanyMember(companyId) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin', 'company_admin'];
     }
 
     function isAssignedToVendor(vendorId) {
-      return isCollector() && 
+      return isCollector() &&
         vendorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedVendorIds;
     }
 
-    function canAccessVendor(vendorId) {
-      return isAdmin() || isAssignedToVendor(vendorId);
+    function onlyLocationFields() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['currentLat', 'currentLng', 'lastLocationAddress', 'lastLocationUpdateAt']);
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      allow create: if isAdmin();
-      allow update: if isAdmin() || isOwner(userId);
-      allow delete: if isAdmin();
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isSuperAdmin());
+      allow create: if isSuperAdmin();
+      allow update: if (request.auth.uid == userId &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'phone', 'email', 'avatar', 'password'])
+        ) || isSuperAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     match /vendors/{vendorId} {
-      allow read: if isAuthenticated() && canAccessVendor(vendorId);
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (isAssignedToVendor(vendorId) && 
-        request.resource.diff(resource.data).affectedKeys()
-          .hasOnly(['currentLat', 'currentLng', 'lastLocationAddress', 'lastLocationUpdateAt']));
-      allow delete: if isAdmin();
+      allow read: if isSuperAdmin() || isAssignedToVendor(vendorId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() ||
+        (isCollector() && isAssignedToVendor(vendorId) && onlyLocationFields());
+      allow delete: if isSuperAdmin();
     }
 
     match /carts/{cartId} {
-      allow read: if isAuthenticated();
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (isCollector() && 
-        request.resource.diff(resource.data).affectedKeys()
-          .hasOnly(['currentLat', 'currentLng', 'lastLocationAddress', 'lastLocationUpdateAt']));
-      allow delete: if isAdmin();
+      allow read: if isSuperAdmin() || isCollector();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (isCollector() && onlyLocationFields());
+      allow delete: if isSuperAdmin();
     }
 
     match /agreements/{agreementId} {
-      allow read: if isAuthenticated() && (
-        isAdmin() || 
-        isAssignedToVendor(get(/databases/$(database)/documents/agreements/$(agreementId)).data.vendorId)
-      );
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (
-        isCollector() && 
-        request.resource.diff(resource.data).affectedKeys().hasOnly(['carriedBalance']) &&
+      allow read: if isSuperAdmin() || isAssignedToVendor(resource.data.vendorId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (
+        isCollector() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['carriedBalance']) &&
         isAssignedToVendor(resource.data.vendorId)
       );
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     match /payments/{paymentId} {
-      allow read: if isAuthenticated() && (
-        isAdmin() || 
-        isAssignedToVendor(get(/databases/$(database)/documents/payments/$(paymentId)).data.vendorId)
+      allow read: if isSuperAdmin() || isAssignedToVendor(resource.data.vendorId);
+      allow create: if isSuperAdmin() || isAssignedToVendor(request.resource.data.vendorId);
+      allow update: if isSuperAdmin() || (
+        isCollector() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['receiptSent'])
       );
-      allow create: if isAuthenticated() && (
-        isAdmin() || 
-        isAssignedToVendor(request.resource.data.vendorId)
-      );
-      allow update: if isAdmin() || (
-        isCollector() && 
-        request.resource.diff(resource.data).affectedKeys().hasOnly(['receiptSent'])
-      );
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /counters/{counterId} {
+      allow read, write: if isSuperAdmin() || isCollector();
     }
 
     match /auditLogs/{logId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin();
+      allow create: if isAuthenticated();
       allow update, delete: if false;
     }
 
     match /notifications/{notifId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin();
-      allow update: if isAdmin() || (
-        isAuthenticated() && 
-        request.resource.diff(resource.data).affectedKeys().hasOnly(['read'])
+      allow create: if isAuthenticated();
+      allow update: if isSuperAdmin() || (
+        isAuthenticated() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
       );
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
     }
 
     match /zones/{zoneId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin();
     }
 
     match /partnerLeads/{leadId} {
-      allow read: if isAdmin();
+      allow read: if isSuperAdmin();
       allow create: if isAuthenticated();
-      allow update, delete: if isAdmin();
+      allow update, delete: if isSuperAdmin();
     }
 
     match /settings/{settingId} {
       allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+
+    match /companies/{companyId} {
+      allow read: if isCompanyMember(companyId) || isSuperAdmin();
+      allow write: if isSuperAdmin();
+
+      match /vendors/{vendorId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow create: if isCompanyAdmin(companyId) || isSuperAdmin();
+        allow update: if isCompanyAdmin(companyId) || isSuperAdmin() || (
+          isCollector() && isCompanyMember(companyId) &&
+          vendorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedVendorIds &&
+          onlyLocationFields()
+        );
+        allow delete: if isCompanyAdmin(companyId) || isSuperAdmin();
+      }
+
+      match /carts/{cartId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow create: if isCompanyAdmin(companyId) || isSuperAdmin();
+        allow update: if isCompanyAdmin(companyId) || isSuperAdmin() || (
+          isCollector() && isCompanyMember(companyId) && onlyLocationFields()
+        );
+        allow delete: if isCompanyAdmin(companyId) || isSuperAdmin();
+      }
+
+      match /agreements/{agreementId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow create: if isCompanyAdmin(companyId) || isSuperAdmin();
+        allow update: if isCompanyAdmin(companyId) || isSuperAdmin() || (
+          isCollector() && isCompanyMember(companyId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['carriedBalance']) &&
+          resource.data.vendorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedVendorIds
+        );
+        allow delete: if isCompanyAdmin(companyId) || isSuperAdmin();
+      }
+
+      match /payments/{paymentId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow create: if isCompanyAdmin(companyId) || isSuperAdmin() || (
+          isCollector() && isCompanyMember(companyId) &&
+          request.resource.data.vendorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedVendorIds
+        );
+        allow update: if isCompanyAdmin(companyId) || isSuperAdmin() || (
+          isCollector() && isCompanyMember(companyId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['receiptSent'])
+        );
+        allow delete: if isCompanyAdmin(companyId) || isSuperAdmin();
+      }
+
+      match /counters/{counterId} {
+        allow read, write: if isCompanyMember(companyId) || isSuperAdmin();
+      }
+
+      match /auditLogs/{logId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow create: if isCompanyMember(companyId) || isSuperAdmin();
+        allow update, delete: if false;
+      }
+
+      match /notifications/{notifId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow create: if isCompanyMember(companyId) || isSuperAdmin();
+        allow update: if isCompanyAdmin(companyId) || isSuperAdmin() || (
+          isAuthenticated() && isCompanyMember(companyId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+        );
+        allow delete: if isCompanyAdmin(companyId) || isSuperAdmin();
+      }
+
+      match /zones/{zoneId} {
+        allow read: if isCompanyMember(companyId) || isSuperAdmin();
+        allow write: if isCompanyAdmin(companyId) || isSuperAdmin();
+      }
     }
   }
 }

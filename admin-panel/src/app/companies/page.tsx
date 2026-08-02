@@ -11,6 +11,8 @@ interface Company {
     name: string;
     ownerName: string;
     logoUrl: string;
+    address?: string;
+    ownerMobile?: string;
     active: boolean;
     createdAt: string;
 }
@@ -35,6 +37,14 @@ export default function CompaniesPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ active: !active }),
         });
+        load();
+    };
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!window.confirm(`Permanently delete "${name}"?\n\nThis removes the company, its admins, collectors and ALL data (vendors, carts, agreements, payments). This cannot be undone.`)) return;
+        const res = await fetch(`/api/companies/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (!json.success) alert(json.error || 'Failed to delete company');
         load();
     };
 
@@ -75,9 +85,15 @@ export default function CompaniesPage() {
                                     )}
                                     <div className="min-w-0">
                                         <h3 className="font-bold text-white text-sm truncate">{c.name}</h3>
-                                        <p className="text-xs text-slate-400">{c.ownerName}</p>
+                                        <p className="text-xs text-slate-400 truncate">{c.ownerName}</p>
                                     </div>
                                 </div>
+                                {(c.address || c.ownerMobile) && (
+                                    <div className="text-[11px] text-slate-500 space-y-0.5">
+                                        {c.address && <p className="truncate">{c.address}</p>}
+                                        {c.ownerMobile && <p>{c.ownerMobile}</p>}
+                                    </div>
+                                )}
                                 <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.active ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
                                         {c.active ? 'Active' : 'Inactive'}
@@ -88,11 +104,22 @@ export default function CompaniesPage() {
                                         >
                                             {c.active ? 'Deactivate' : 'Activate'}
                                         </button>
-                                        <a href={`/companies/${c.id}/edit`}
+                                        <button onClick={() => handleDelete(c.id, c.name)}
+                                            className="flex items-center gap-1 text-[10px] text-rose-400 hover:text-rose-300 transition font-semibold"
+                                            title="Permanently delete company"
+                                        >
+                                            <Trash2 className="w-3 h-3" /> Delete
+                                        </button>
+                                        <Link href={`/companies/${c.id}/edit`}
                                             className="text-[10px] text-indigo-400 hover:text-indigo-300 transition font-semibold"
                                         >
                                             Edit
-                                        </a>
+                                        </Link>
+                                        <Link href={`/companies/${c.id}`}
+                                            className="text-[10px] text-orange-400 hover:text-orange-300 transition font-semibold flex items-center gap-1"
+                                        >
+                                            View <ExternalLink className="w-3 h-3" />
+                                        </Link>
                                     </div>
                                 </div>
                             </div>

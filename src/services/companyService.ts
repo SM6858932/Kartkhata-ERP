@@ -6,6 +6,10 @@ export interface CompanySettings {
     ownerName: string;
     logoUrl: string;
     active: boolean;
+    address?: string;
+    ownerMobile?: string;
+    phone?: string;
+    email?: string;
 }
 
 const cache = new Map<string, CompanySettings>();

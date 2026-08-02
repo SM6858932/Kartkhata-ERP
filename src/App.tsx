@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { User, Vendor, Cart, RentAgreement, Payment, AuditLog, AppNotification } from './types';
+import { User, Vendor, Cart, RentAgreement, Payment, AuditLog, AppNotification, isOwnerRole } from './types';
 import { StorageService } from './services/storage';
 import { calculateVendorLedger, VendorLedgerSummary } from './utils/ledger';
 import { LoginScreen } from './components/auth/LoginScreen';
@@ -36,7 +36,7 @@ export function App() {
     const {
         vendors, carts, agreements, payments, auditLogs, notifications,
         isSyncing, lastSyncTime, refreshFromFirestore
-    } = useFirestoreSync();
+    } = useFirestoreSync(currentUser?.companyId);
 
     // Modals state
     const [selectedSummaryToCollect, setSelectedSummaryToCollect] = useState<VendorLedgerSummary | null>(null);
@@ -382,6 +382,7 @@ export function App() {
                 activeTab={activeTab}
                 onTabChange={tab => setActiveTab(tab)}
                 onAddVendor={() => setIsAddVendorOpen(true)}
+                canAddVendor={isOwnerRole(currentUser.role)}
             />
         </div>
     );

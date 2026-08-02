@@ -13,7 +13,7 @@ export default function EditCompanyPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [form, setForm] = useState({ name: '', ownerName: '' });
+    const [form, setForm] = useState({ name: '', ownerName: '', address: '', ownerMobile: '' });
     const [logoPreview, setLogoPreview] = useState('');
 
     useEffect(() => {
@@ -23,7 +23,12 @@ export default function EditCompanyPage() {
                 if (res.success) {
                     const c = res.data.find((d: any) => d.id === id);
                     if (c) {
-                        setForm({ name: c.name, ownerName: c.ownerName });
+                        setForm({
+                            name: c.name,
+                            ownerName: c.ownerName,
+                            address: c.address || '',
+                            ownerMobile: c.ownerMobile || '',
+                        });
                         setLogoPreview(c.logoUrl || '');
                     }
                 }
@@ -77,6 +82,16 @@ export default function EditCompanyPage() {
                             <label className="text-xs font-semibold text-slate-300 block mb-1">Owner Name</label>
                             <input value={form.ownerName} onChange={e => setForm(f => ({ ...f, ownerName: e.target.value }))}
                                 className="w-full bg-slate-800 border border-slate-700 text-white text-sm px-3 py-2.5 rounded-xl" />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-300 block mb-1">Company Address</label>
+                            <textarea value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} rows={2}
+                                className="w-full bg-slate-800 border border-slate-700 text-white text-sm px-3 py-2.5 rounded-xl" />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-slate-300 block mb-1">Owner Mobile Number</label>
+                            <input value={form.ownerMobile} onChange={e => setForm(f => ({ ...f, ownerMobile: e.target.value }))}
+                                className="w-full bg-slate-800 border border-slate-700 text-white text-sm px-3 py-2.5 rounded-xl font-mono" />
                         </div>
                         {logoPreview && (
                             <div>

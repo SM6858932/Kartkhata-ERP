@@ -7,12 +7,14 @@ interface BottomNavProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
   onAddVendor: () => void;
+  canAddVendor?: boolean;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
   onTabChange,
   onAddVendor,
+  canAddVendor = true,
 }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40">
@@ -31,12 +33,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             {activeTab === 'vendors' && <span className="w-4 h-0.5 bg-indigo-600 rounded-full mt-0.5" />}
           </button>
 
-          <div className="relative -top-5 flex flex-col items-center">
-            <button onClick={onAddVendor} aria-label="Add vendor" title="Add Vendor" className="w-14 h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white flex items-center justify-center shadow-xl shadow-orange-600/40 border-4 border-white dark:border-slate-900 transition-all duration-200 active:scale-95">
-              <Plus className="w-7 h-7" />
-            </button>
-            <span className="text-[10px] font-bold mt-1 text-orange-500 dark:text-orange-400">Add Vendor</span>
-          </div>
+          {canAddVendor && (
+            <div className="relative -top-5 flex flex-col items-center">
+              <button onClick={onAddVendor} aria-label="Add vendor" title="Add Vendor" className="w-14 h-14 rounded-full bg-gradient-to-tr from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white flex items-center justify-center shadow-xl shadow-orange-600/40 border-4 border-white dark:border-slate-900 transition-all duration-200 active:scale-95">
+                <Plus className="w-7 h-7" />
+              </button>
+              <span className="text-[10px] font-bold mt-1 text-orange-500 dark:text-orange-400">Add Vendor</span>
+            </div>
+          )}
 
           <button onClick={() => onTabChange('statements')} aria-label="Statements tab" className={`flex flex-col items-center justify-center py-1 px-2.5 transition-all duration-200 ${activeTab === 'statements' ? 'text-indigo-600 dark:text-indigo-400 font-bold scale-105' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>
             <FileText className="w-5 h-5" />

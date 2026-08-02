@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -18,8 +18,27 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const userCred = await signInWithEmailAndPassword(auth, email, password);
-      localStorage.setItem('adminSession', JSON.stringify({ uid: userCred.user.uid }));
-      document.cookie = `adminSession=${userCred.user.uid}; path=/; max-age=86400; samesite=lax`;
+      const uid = userCred.user.uid;
+
+      localStorage.setItem('adminSession', JSON.stringify({ uid }));
+      document.cookie = `adminSession=${uid}; path=/; max-age=86400; samesite=lax`;
+
+      const meRes = await fetch('/api/auth/me');
+      const me = await meRes.json();
+
+      if (me.success && me.data) {
+        const user = me.data;
+        localStorage.setItem('adminSession', JSON.stringify({
+          uid,
+          role: user.role,
+          companyId: user.companyId,
+          name: user.name,
+        }));
+        document.cookie = `adminRole=${user.role || ''}; path=/; max-age=86400; samesite=lax`;
+        document.cookie = `adminCompanyId=${user.companyId || ''}; path=/; max-age=86400; samesite=lax`;
+        document.cookie = `adminName=${encodeURIComponent(user.name || '')}; path=/; max-age=86400; samesite=lax`;
+      }
+
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Login failed');

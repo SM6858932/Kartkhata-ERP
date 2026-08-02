@@ -10,17 +10,42 @@ import {
 } from '../types';
 
 // ============================================================
+// COMPANY SCOPING
+// ============================================================
+let activeCompanyId: string | null = null;
+
+export function setActiveCompany(companyId: string | null): void {
+    activeCompanyId = companyId;
+}
+
+export function getActiveCompany(): string | null {
+    return activeCompanyId;
+}
+
+export function scopedCol(name: string) {
+    return activeCompanyId
+        ? collection(db, 'companies', activeCompanyId, name)
+        : collection(db, name);
+}
+
+export function scopedDoc(name: string, id: string) {
+    return activeCompanyId
+        ? doc(db, 'companies', activeCompanyId, name, id)
+        : doc(db, name, id);
+}
+
+// ============================================================
 // COLLECTION REFERENCES
 // ============================================================
 const collections = {
     users: () => collection(db, 'users'),
-    vendors: () => collection(db, 'vendors'),
-    carts: () => collection(db, 'carts'),
-    agreements: () => collection(db, 'agreements'),
-    payments: () => collection(db, 'payments'),
-    auditLogs: () => collection(db, 'auditLogs'),
-    notifications: () => collection(db, 'notifications'),
-    zones: () => collection(db, 'zones'),
+    vendors: () => scopedCol('vendors'),
+    carts: () => scopedCol('carts'),
+    agreements: () => scopedCol('agreements'),
+    payments: () => scopedCol('payments'),
+    auditLogs: () => scopedCol('auditLogs'),
+    notifications: () => scopedCol('notifications'),
+    zones: () => scopedCol('zones'),
     partnerLeads: () => collection(db, 'partnerLeads'),
     settings: () => collection(db, 'settings'),
 };
@@ -94,7 +119,7 @@ export const VendorService = {
     getAll: () => getCollection<Vendor>(collections.vendors()),
 
     getById: async (id: string): Promise<Vendor | null> => {
-        const snap = await getDoc(doc(db, 'vendors', id));
+        const snap = await getDoc(scopedDoc('vendors', id));
         return snap.exists() ? { id: snap.id, ...snap.data() } as Vendor : null;
     },
 
@@ -117,14 +142,14 @@ export const VendorService = {
     },
 
     update: async (id: string, data: Partial<Vendor>): Promise<void> => {
-        await updateDoc(doc(db, 'vendors', id), {
+        await updateDoc(scopedDoc('vendors', id), {
             ...data,
             updatedAt: serverTimestamp(),
         });
     },
 
     updateLoyalty: async (id: string, score: number): Promise<void> => {
-        await updateDoc(doc(db, 'vendors', id), {
+        await updateDoc(scopedDoc('vendors', id), {
             loyaltyScore: Math.max(0, Math.min(100, score)),
             updatedAt: serverTimestamp(),
         });
@@ -148,7 +173,7 @@ export const CartService = {
     getAll: () => getCollection<Cart>(collections.carts()),
 
     getById: async (id: string): Promise<Cart | null> => {
-        const snap = await getDoc(doc(db, 'carts', id));
+        const snap = await getDoc(scopedDoc('carts', id));
         return snap.exists() ? { id: snap.id, ...snap.data() } as Cart : null;
     },
 
@@ -171,14 +196,14 @@ export const CartService = {
     },
 
     update: async (id: string, data: Partial<Cart>): Promise<void> => {
-        await updateDoc(doc(db, 'carts', id), {
+        await updateDoc(scopedDoc('carts', id), {
             ...data,
             updatedAt: serverTimestamp(),
         });
     },
 
     updateLocation: async (id: string, lat: number, lng: number, address: string): Promise<void> => {
-        await updateDoc(doc(db, 'carts', id), {
+        await updateDoc(scopedDoc('carts', id), {
             currentLat: lat,
             currentLng: lng,
             lastLocationAddress: address,
@@ -198,7 +223,7 @@ export const AgreementService = {
     getAll: () => getCollection<RentAgreement>(collections.agreements()),
 
     getById: async (id: string): Promise<RentAgreement | null> => {
-        const snap = await getDoc(doc(db, 'agreements', id));
+        const snap = await getDoc(scopedDoc('agreements', id));
         return snap.exists() ? { id: snap.id, ...snap.data() } as RentAgreement : null;
     },
 
@@ -233,14 +258,14 @@ export const AgreementService = {
     },
 
     update: async (id: string, data: Partial<RentAgreement>): Promise<void> => {
-        await updateDoc(doc(db, 'agreements', id), {
+        await updateDoc(scopedDoc('agreements', id), {
             ...data,
             updatedAt: serverTimestamp(),
         });
     },
 
     terminate: async (id: string, notes?: string): Promise<void> => {
-        await updateDoc(doc(db, 'agreements', id), {
+        await updateDoc(scopedDoc('agreements', id), {
             status: 'terminated',
             terminatedAt: new Date().toISOString(),
             finalSettlementNotes: notes,
@@ -259,7 +284,7 @@ export const PaymentService = {
     getAll: () => getCollection<Payment>(collections.payments()),
 
     getById: async (id: string): Promise<Payment | null> => {
-        const snap = await getDoc(doc(db, 'payments', id));
+        const snap = await getDoc(scopedDoc('payments', id));
         return snap.exists() ? { id: snap.id, ...snap.data() } as Payment : null;
     },
 
@@ -301,7 +326,7 @@ export const PaymentService = {
     },
 
     update: async (id: string, data: Partial<Payment>): Promise<void> => {
-        await updateDoc(doc(db, 'payments', id), {
+        await updateDoc(scopedDoc('payments', id), {
             ...data,
             updatedAt: serverTimestamp(),
         });
@@ -397,7 +422,7 @@ export const NotificationService = {
     },
 
     markAsRead: async (id: string): Promise<void> => {
-        await updateDoc(doc(db, 'notifications', id), {
+        await updateDoc(scopedDoc('notifications', id), {
             read: true,
             updatedAt: serverTimestamp(),
         });
@@ -429,12 +454,12 @@ export const ZoneService = {
     getAll: () => getCollection<Zone>(collections.zones()),
 
     getById: async (id: string): Promise<Zone | null> => {
-        const snap = await getDoc(doc(db, 'zones', id));
+        const snap = await getDoc(scopedDoc('zones', id));
         return snap.exists() ? { id: snap.id, ...snap.data() } as Zone : null;
     },
 
     create: async (zone: Omit<Zone, 'id'>): Promise<string> => {
-        const docRef = await addDoc(collections.zones(), {
+        const docRef = await addDoc(scopedCol('zones'), {
             ...zone,
             createdAt: serverTimestamp(),
         });
@@ -442,7 +467,7 @@ export const ZoneService = {
     },
 
     update: async (id: string, data: Partial<Zone>): Promise<void> => {
-        await updateDoc(doc(db, 'zones', id), {
+        await updateDoc(scopedDoc('zones', id), {
             ...data,
             updatedAt: serverTimestamp(),
         });
@@ -481,13 +506,13 @@ export const BatchService = {
         const batch = writeBatch(db);
 
         // Update cart status
-        batch.update(doc(db, 'carts', cartId), {
+        batch.update(scopedDoc('carts', cartId), {
             status: 'rented',
             updatedAt: serverTimestamp(),
         });
 
         // Create agreement
-        const agreementRef = doc(collection(db, 'agreements'));
+        const agreementRef = doc(scopedCol('agreements'));
         batch.set(agreementRef, {
             vendorId,
             cartId,
@@ -512,12 +537,12 @@ export const BatchService = {
     ): Promise<void> => {
         const batch = writeBatch(db);
 
-        batch.update(doc(db, 'carts', cartId), {
+        batch.update(scopedDoc('carts', cartId), {
             status: 'available',
             updatedAt: serverTimestamp(),
         });
 
-        batch.update(doc(db, 'agreements', agreementId), {
+        batch.update(scopedDoc('agreements', agreementId), {
             status: 'terminated',
             terminatedAt: new Date().toISOString(),
             carriedBalance: 0,

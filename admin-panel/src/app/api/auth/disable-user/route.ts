@@ -3,13 +3,14 @@ import { auth, db, serverTimestamp } from '@/lib/firebase-admin';
 
 export async function POST(req: NextRequest) {
   try {
-    const { uid } = await req.json();
+    const { uid, active } = await req.json();
     if (!uid) {
       return NextResponse.json({ success: false, error: 'uid required' }, { status: 400 });
     }
 
-    await auth().updateUser(uid, { disabled: true });
-    await db().collection('users').doc(uid).update({ active: false, updatedAt: serverTimestamp() });
+    const disabled = !(active === true);
+    await auth().updateUser(uid, { disabled });
+    await db().collection('users').doc(uid).update({ active: !disabled, updatedAt: serverTimestamp() });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

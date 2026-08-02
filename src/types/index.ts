@@ -1,4 +1,12 @@
-export type UserRole = 'admin' | 'collector';
+export type UserRole = 'admin' | 'company_admin' | 'staff' | 'collector';
+
+export function isOwnerRole(role: UserRole): boolean {
+    return role === 'admin' || role === 'company_admin';
+}
+
+export function isStaffRole(role: UserRole): boolean {
+    return role === 'collector' || role === 'staff';
+}
 
 export interface User {
     id: string;
