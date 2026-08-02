@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Building2, Users, TrendingUp, DollarSign, ShieldCheck } from 'lucide-react';
 import AdminLayout from './admin-layout';
 import Link from 'next/link';
-import { getSession } from '@/lib/session';
+import { getSession, isSuperAdminRole } from '@/lib/session';
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -51,7 +51,7 @@ export default function DashboardPage() {
               {isOwner ? 'Manage your company workspace' : 'Manage multi-company CartKhata ERP'}
             </p>
           </div>
-          {session.role === 'super_admin' && (
+          {isSuperAdminRole(session.role) && (
             <Link href="/companies/new"
               className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition"
             >

@@ -6,7 +6,7 @@ import AdminLayout from '../../admin-layout';
 import { ArrowLeft, Users, ShieldCheck, UserPlus, Loader2, Phone, MapPin, Building2, KeyRound, Eye, EyeOff, RefreshCw, Trash2, Copy, CheckCircle2, Power } from 'lucide-react';
 import Link from 'next/link';
 import { normalizeLogoUrl } from '@/lib/logoUrl';
-import { getSession } from '@/lib/session';
+import { getSession, isSuperAdminRole } from '@/lib/session';
 
 interface Staff {
     uid: string;
@@ -145,7 +145,7 @@ export default function CompanyDetailPage() {
                     <Link href="/companies" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition">
                         <ArrowLeft className="w-4 h-4" /> Back to Companies
                     </Link>
-                    {session.role === 'super_admin' && company && (
+                    {isSuperAdminRole(session.role) && company && (
                         <button onClick={handleDeleteCompany} disabled={deleting}
                             className="flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-3 py-2 rounded-xl transition disabled:opacity-50">
                             {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
@@ -189,7 +189,7 @@ export default function CompanyDetailPage() {
                                 )}
                             </div>
 
-                            {session.role === 'super_admin' && (
+                            {isSuperAdminRole(session.role) && (
                                 <Link href={`/companies/${company.id}/edit`}
                                     className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition">
                                     Edit Company Profile
@@ -197,7 +197,7 @@ export default function CompanyDetailPage() {
                             )}
                         </div>
 
-                        {session.role === 'super_admin' && credentials.length > 0 && (
+                        {isSuperAdminRole(session.role) && credentials.length > 0 && (
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">

@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { LayoutDashboard, Building2, Users, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { getSession, clearSession } from '@/lib/session';
+import { getSession, clearSession, isSuperAdminRole } from '@/lib/session';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const session = getSession();
-  const isSuperAdmin = session.role === 'super_admin';
+  const isSuperAdmin = isSuperAdminRole(session.role);
 
   useEffect(() => {
     if (pathname.startsWith('/companies') && !isSuperAdmin) {

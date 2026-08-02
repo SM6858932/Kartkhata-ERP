@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, db } from '@/lib/firebase-admin';
+import { isSuperAdminRole } from '@/lib/roles';
 
 export async function POST(req: NextRequest) {
     try {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
         const target = targetSnap.data()!;
 
         // super_admin can reset anyone; company_admin only their own company's users
-        if (me.role !== 'super_admin' && (me.role !== 'company_admin' || me.companyId !== target.companyId)) {
+        if (!isSuperAdminRole(me.role) && (me.role !== 'company_admin' || me.companyId !== target.companyId)) {
             return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
         }
 

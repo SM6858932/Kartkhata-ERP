@@ -25,9 +25,10 @@ export function getSession(): AdminSession {
     return { uid: '', role: '', companyId: '', name: '' };
 }
 
-export function isSuperAdmin(): boolean {
-    return getSession().role === 'super_admin';
+export function isSuperAdminRole(role: string | undefined | null): boolean {
+    return role === 'super_admin' || role === 'admin';
 }
+
 
 export function clearSession(): void {
     localStorage.removeItem('adminSession');

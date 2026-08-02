@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, db, serverTimestamp } from '@/lib/firebase-admin';
+import { isSuperAdminRole } from '@/lib/roles';
 
 async function currentUser(req: NextRequest): Promise<{ uid: string; role: string; companyId: string } | null> {
     const uid = req.cookies.get('adminSession')?.value;
@@ -13,7 +14,7 @@ async function currentUser(req: NextRequest): Promise<{ uid: string; role: strin
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         const user = await currentUser(req);
-        if (!user || user.role !== 'super_admin') {
+        if (!user || !isSuperAdminRole(user.role)) {
             return NextResponse.json({ success: false, error: 'Forbidden: super admin only' }, { status: 403 });
         }
 
@@ -31,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
     try {
         const user = await currentUser(req);
-        if (!user || user.role !== 'super_admin') {
+        if (!user || !isSuperAdminRole(user.role)) {
             return NextResponse.json({ success: false, error: 'Forbidden: super admin only' }, { status: 403 });
         }
 

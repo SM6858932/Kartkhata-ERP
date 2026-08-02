@@ -1,4 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
+import { isSuperAdminRole } from '@/lib/roles';
+
 import { auth, db, serverTimestamp } from '@/lib/firebase-admin';
 import { uploadLogo } from '@/lib/appwrite-storage';
 
@@ -27,7 +29,7 @@ export async function GET(req: NextRequest) {
         }
 
         let q: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
-        if (user.role === 'super_admin') {
+        if (isSuperAdminRole(user.role)) {
             q = db().collection('companies').orderBy('createdAt', 'desc');
         } else if (user.companyId) {
             q = db().collection('companies')
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
         const companies = snapshot.docs.map(d => {
             const data = d.data();
             // Credentials (stored passwords) are only exposed to the super admin
-            if (user.role !== 'super_admin') {
+            if (!isSuperAdminRole(user.role)) {
                 delete data.credentials;
             }
             return { id: d.id, ...data };
@@ -55,7 +57,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const user = await currentUser(req);
-        if (!user || user.role !== 'super_admin') {
+        if (!user || !isSuperAdminRole(user.role)) {
             return NextResponse.json({ success: false, error: 'Forbidden: super admin only' }, { status: 403 });
         }
 
