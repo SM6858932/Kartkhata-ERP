@@ -8,5 +8,5 @@
 - [x] 5. Update admin-layout.tsx — add Settings nav
 - [x] 6. Branding — add ownerName to WhatsApp receipt header
 - [x] 7. Build admin panel (npm run build) — verify zero errors (20/20 pages, Compiled successfully)
-- [ ] 8. Push to git + Vercel auto-deploy
+- [x] 8. Push to git + Vercel auto-deploy (commit 4f0e88c → origin/master; Vercel will auto-deploy)
 
