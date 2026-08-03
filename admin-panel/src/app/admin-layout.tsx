@@ -1,37 +1,48 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Building2, Users, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, Menu, X, ShieldAlert, Database } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { getSession, clearSession, isSuperAdminRole } from '@/lib/session';
+import { getSession, clearSession } from '@/lib/session';
+import { canManageCompanies, canManageCompanyStaff } from '@/lib/roles';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const session = getSession();
-  const isSuperAdmin = isSuperAdminRole(session.role);
+const session = getSession();
+  const canSeeCompanies = canManageCompanies(session.role);
+  const canSeeStaff = canManageCompanyStaff(session.role);
 
   useEffect(() => {
-    if (pathname.startsWith('/companies') && !isSuperAdmin) {
+    if (pathname.startsWith('/companies') && !canSeeCompanies) {
       router.replace('/');
     }
-  }, [pathname, isSuperAdmin, router]);
+  }, [pathname, canSeeCompanies, router]);
 
   const handleLogout = () => {
     clearSession();
     router.push('/login');
   };
 
-  const navItems = isSuperAdmin
-    ? [
-        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/companies', label: 'Companies', icon: Building2 },
-      ]
-    : [
-        { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-      ];
+const navItems = [
+    { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  ];
+
+  if (canSeeCompanies) {
+    navItems.push({ href: '/companies', label: 'Companies', icon: Building2 });
+  }
+
+  if (canSeeStaff && session.companyId) {
+    navItems.push({ href: `/companies/${session.companyId}`, label: 'My Staff', icon: Users });
+  }
+
+// Audit log available to all authenticated admin users
+  navItems.push({ href: '/audit', label: 'Audit Log', icon: ShieldAlert });
+
+  // Backup available to all authenticated admin users
+  navItems.push({ href: '/backup', label: 'Backup', icon: Database });
 
   const displayName = session.name?.replace(/ \(Admin\)$/, '') || session.uid || 'Admin';
 

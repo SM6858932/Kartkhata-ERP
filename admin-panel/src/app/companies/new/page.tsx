@@ -7,14 +7,14 @@ import { ArrowLeft, Building2, Upload, CheckCircle2, Loader2, Plus, Trash2, Shie
 import Link from 'next/link';
 
 interface AccountForm {
-    role: 'admin' | 'collector';
+    role: 'company_admin' | 'collector';
     name: string;
     email: string;
     password: string;
     phone: string;
 }
 
-const emptyAccount = (role: 'admin' | 'collector' = 'admin'): AccountForm => ({
+const emptyAccount = (role: 'company_admin' | 'collector' = 'company_admin'): AccountForm => ({
     role, name: '', email: '', password: '', phone: '+91 ',
 });
 
@@ -28,7 +28,7 @@ export default function NewCompanyPage() {
   const [form, setForm] = useState({
     name: '', ownerName: '', address: '', ownerMobile: '+91 ',
   });
-  const [accounts, setAccounts] = useState<AccountForm[]>([emptyAccount('admin')]);
+const [accounts, setAccounts] = useState<AccountForm[]>([emptyAccount('company_admin')]);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState('');
 
@@ -179,8 +179,8 @@ export default function NewCompanyPage() {
               <div key={idx} className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${acc.role === 'admin' ? 'bg-orange-500/20 text-orange-400' : 'bg-sky-500/20 text-sky-400'}`}>
-                      {acc.role === 'admin' ? <ShieldCheck className="w-4 h-4" /> : <Smartphone className="w-4 h-4" />}
+<span className={`w-7 h-7 rounded-lg flex items-center justify-center ${acc.role === 'company_admin' ? 'bg-orange-500/20 text-orange-400' : 'bg-sky-500/20 text-sky-400'}`}>
+                      {acc.role === 'company_admin' ? <ShieldCheck className="w-4 h-4" /> : <Smartphone className="w-4 h-4" />}
                     </span>
                     <h3 className="font-bold text-white text-sm">Account {idx + 1}</h3>
                   </div>
@@ -196,9 +196,9 @@ export default function NewCompanyPage() {
 
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">Role *</label>
-                  <select value={acc.role} onChange={e => updateAccount(idx, 'role', e.target.value)}
+<select value={acc.role} onChange={e => updateAccount(idx, 'role', e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 text-white text-sm px-3 py-2.5 rounded-xl">
-                    <option value="admin">Admin (company owner / manager)</option>
+                    <option value="company_admin">Company Admin (owner / manager)</option>
                     <option value="collector">Collector (field staff)</option>
                   </select>
                 </div>
@@ -206,7 +206,7 @@ export default function NewCompanyPage() {
                 <div>
                   <label className="text-xs font-semibold text-slate-300 block mb-1">Name *</label>
                   <input value={acc.name} onChange={e => updateAccount(idx, 'name', e.target.value)}
-                    placeholder={acc.role === 'admin' ? 'e.g. Ramesh Kumar' : 'e.g. Anil Kumar'}
+placeholder={acc.role === 'company_admin' ? 'e.g. Ramesh Kumar' : 'e.g. Anil Kumar'}
                     className="w-full bg-slate-800 border border-slate-700 text-white text-sm px-3 py-2.5 rounded-xl" />
                 </div>
 

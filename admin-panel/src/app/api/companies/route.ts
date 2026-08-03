@@ -1,5 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { isSuperAdminRole } from '@/lib/roles';
+import { isSuperAdminRole, canManageCompanies, isCompanyAdminRole } from '@/lib/roles';
 
 import { auth, db, serverTimestamp } from '@/lib/firebase-admin';
 import { uploadLogo } from '@/lib/appwrite-storage';
@@ -14,7 +14,7 @@ async function currentUser(req: NextRequest): Promise<{ uid: string; role: strin
 }
 
 interface AccountInput {
-    role: 'admin' | 'collector';
+    role: 'company_admin' | 'collector';
     name: string;
     email: string;
     password: string;
@@ -28,26 +28,28 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Not signed in' }, { status: 401 });
         }
 
-        let q: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>;
+let companies: any[];
         if (isSuperAdminRole(user.role)) {
-            q = db().collection('companies').orderBy('createdAt', 'desc');
+            // Super admin sees all companies
+            const snapshot = await db().collection('companies')
+                .orderBy('createdAt', 'desc')
+                .get();
+            companies = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         } else if (user.companyId) {
-            q = db().collection('companies')
-                .where('__name__', '==', user.companyId)
-                .orderBy('createdAt', 'desc');
+            // Company admin / staff sees only their own company
+            const doc = await db().collection('companies').doc(user.companyId).get();
+            companies = doc.exists ? [{ id: doc.id, ...doc.data() }] : [];
         } else {
-            q = db().collection('companies').where('active', '==', false);
+            companies = [];
         }
 
-        const snapshot = await q.get();
-        const companies = snapshot.docs.map(d => {
-            const data = d.data();
-            // Credentials (stored passwords) are only exposed to the super admin
-            if (!isSuperAdminRole(user.role)) {
-                delete data.credentials;
-            }
-            return { id: d.id, ...data };
-        });
+        // Credentials (stored passwords) are only exposed to the super admin
+        if (!isSuperAdminRole(user.role)) {
+            companies = companies.map(c => {
+                const { credentials, ...rest } = c;
+                return rest;
+            });
+        }
         return NextResponse.json({ success: true, data: companies });
     } catch (err: any) {
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
             const adminPassword = formData.get('adminPassword') as string;
             const adminPhone = formData.get('adminPhone') as string;
             if (adminEmail && adminPassword) {
-                accounts.push({ role: 'admin', name: `${ownerName} (Admin)`, email: adminEmail, password: adminPassword, phone: adminPhone });
+accounts.push({ role: 'company_admin', name: `${ownerName} (Admin)`, email: adminEmail, password: adminPassword, phone: adminPhone });
             }
         }
         accounts = accounts.filter(a => a.email && a.password && a.name);
@@ -102,8 +104,8 @@ export async function POST(req: NextRequest) {
         }
 
         const created: any[] = [];
-        for (const acc of accounts) {
-            const role = acc.role === 'admin' ? 'company_admin' : 'collector';
+for (const acc of accounts) {
+            const role = acc.role === 'company_admin' ? 'company_admin' : 'collector';
             const userRecord = await auth().createUser({
                 email: acc.email,
                 password: acc.password,
@@ -111,7 +113,7 @@ export async function POST(req: NextRequest) {
                 ...(acc.phone ? { phoneNumber: acc.phone } : {}),
             });
 
-            await db().collection('users').doc(userRecord.uid).set({
+await db().collection('users').doc(userRecord.uid).set({
                 name: acc.name,
                 phone: acc.phone || '',
                 email: acc.email,
@@ -120,6 +122,13 @@ export async function POST(req: NextRequest) {
                 active: true,
                 assignedVendorIds: [],
                 createdAt: serverTimestamp(),
+            });
+
+            // Set custom claims for Firestore rules
+            await auth().setCustomUserClaims(userRecord.uid, {
+                role,
+                companyId,
+                assignedToVendorIds: [],
             });
 
             created.push({

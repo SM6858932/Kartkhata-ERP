@@ -1,4 +1,4 @@
-﻿rules_version = '2';
+rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -7,29 +7,36 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+// ============================================================
+    // CUSTOM CLAIMS-BASED AUTH (Plan Section 10)
+    // Custom claims are the real security boundary — set server-side
+    // by admin API / Cloud Functions, never from the client.
+    // ============================================================
+
     function isSuperAdmin() {
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin'];
+        request.auth.token.role in ['admin', 'super_admin'];
     }
 
     function isCollector() {
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['collector', 'staff'];
+        request.auth.token.role in ['collector', 'staff'];
     }
 
     function isCompanyMember(companyId) {
       return isAuthenticated() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+        request.auth.token.companyId == companyId;
     }
 
     function isCompanyAdmin(companyId) {
       return isCompanyMember(companyId) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'super_admin', 'company_admin'];
+        request.auth.token.role in ['admin', 'super_admin', 'company_admin'];
     }
 
     function isAssignedToVendor(vendorId) {
       return isCollector() &&
-        vendorId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.assignedVendorIds;
+        request.auth.token.assignedToVendorIds != null &&
+        vendorId in request.auth.token.assignedToVendorIds;
     }
 
     function onlyLocationFields() {
@@ -55,11 +62,17 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    match /carts/{cartId} {
+match /carts/{cartId} {
       allow read: if isSuperAdmin() || isCollector();
       allow create: if isSuperAdmin();
       allow update: if isSuperAdmin() || (isCollector() && onlyLocationFields());
       allow delete: if isSuperAdmin();
+
+      // v2: locationHistory — appended automatically by Cloud Function on cart location updates
+      match /locationHistory/{entryId} {
+        allow read: if isSuperAdmin() || isCollector();
+        allow write: if false; // Cloud Functions only
+      }
     }
 
     match /agreements/{agreementId} {
@@ -83,14 +96,13 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    match /counters/{counterId} {
-      allow read, write: if isSuperAdmin() || isCollector();
+match /counters/{counterId} {
+      allow read, write: if false; // Cloud Functions only — never client-writable
     }
 
     match /auditLogs/{logId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if false;
+      allow write: if false; // Cloud Functions only — immutable append-only ledger
     }
 
     match /notifications/{notifId} {

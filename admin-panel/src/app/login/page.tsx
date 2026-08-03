@@ -23,20 +23,20 @@ export default function LoginPage() {
       localStorage.setItem('adminSession', JSON.stringify({ uid }));
       document.cookie = `adminSession=${uid}; path=/; max-age=86400; samesite=lax`;
 
-      const meRes = await fetch('/api/auth/me');
+const meRes = await fetch('/api/auth/me');
       const me = await meRes.json();
 
       if (me.success && me.data) {
         const user = me.data;
-        localStorage.setItem('adminSession', JSON.stringify({
-          uid,
-          role: user.role,
-          companyId: user.companyId,
-          name: user.name,
-        }));
-        document.cookie = `adminRole=${user.role || ''}; path=/; max-age=86400; samesite=lax`;
-        document.cookie = `adminCompanyId=${user.companyId || ''}; path=/; max-age=86400; samesite=lax`;
-        document.cookie = `adminName=${encodeURIComponent(user.name || '')}; path=/; max-age=86400; samesite=lax`;
+        const validRoles = ['super_admin', 'admin', 'company_admin'];
+        if (!validRoles.includes(user.role)) {
+          setError(`Access denied: "${user.role}" role does not have admin panel access. Contact super admin.`);
+          setLoading(false);
+          return;
+        }
+        // Use the centralized setSessionCookie function
+        const { setSessionCookie } = await import('@/lib/session');
+        setSessionCookie(uid, user.role || '', user.companyId || '', user.name || '');
       }
 
       router.push('/');

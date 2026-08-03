@@ -19,11 +19,16 @@ export default function DashboardPage() {
   const session = getSession();
 
   useEffect(() => {
-    fetch('/api/companies')
-      .then(r => r.json())
-      .then(res => {
-        if (res.success) {
-          setStats({ companies: res.data.length, users: 0 });
+    Promise.all([
+      fetch('/api/companies').then(r => r.json()),
+      fetch('/api/users').then(r => r.json()).catch(() => ({ success: false, data: [] })),
+    ])
+      .then(([companiesRes, usersRes]) => {
+        if (companiesRes.success) {
+          const companies = companiesRes.data;
+          const users = usersRes.success ? usersRes.data : [];
+          const totalUsers = Array.isArray(users) ? users.length : 0;
+          setStats({ companies: companies.length, users: totalUsers });
         }
       })
       .finally(() => setLoading(false));

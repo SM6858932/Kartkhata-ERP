@@ -19,6 +19,13 @@ export async function POST(req: NextRequest) {
             phoneNumber: phone,
         });
 
+// Set custom claims so Firestore security rules can enforce company scoping
+        await auth().setCustomUserClaims(userRecord.uid, {
+            role: safeRole,
+            companyId: companyId,
+            assignedToVendorIds: assignedVendorIds || [],
+        });
+
         await db().collection('users').doc(userRecord.uid).set({
             name, phone, email: userEmail,
             role: safeRole,

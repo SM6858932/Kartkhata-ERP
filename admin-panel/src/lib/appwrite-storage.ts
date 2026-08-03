@@ -2,8 +2,7 @@ import { Client, Storage, ID } from 'node-appwrite';
 import { InputFile } from 'node-appwrite/file';
 
 const rawEndpoint = process.env.APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
-const endpoint = rawEndpoint.replace(/^https?:\/\//, '');
-const endpointUrl = `https://${endpoint}`;
+const endpoint = rawEndpoint.replace(/\/+$/, '');
 const projectId = process.env.APPWRITE_PROJECT_ID || '';
 const apiKey = process.env.APPWRITE_API_KEY || '';
 const bucketId = process.env.APPWRITE_BUCKET_ID || '';
@@ -13,7 +12,7 @@ let storage: Storage | null = null;
 function getStorage(): Storage {
     if (!storage) {
         const client = new Client()
-            .setEndpoint(endpointUrl)
+            .setEndpoint(endpoint)
             .setProject(projectId)
             .setKey(apiKey);
         storage = new Storage(client);
@@ -30,9 +29,10 @@ export async function uploadLogo(
     const storageClient = getStorage();
     const fileId = ID.unique();
     const ext = fileName.split('.').pop() || 'png';
-    const finalFileName = `companies/${companyId}/logo.${ext}`;
+    // Use flat filename — Appwrite organizes files by ID, not path
+    const flatFileName = `${companyId}-logo.${ext}`;
 
-    const inputFile = InputFile.fromBuffer(file, finalFileName);
+    const inputFile = InputFile.fromBuffer(file, flatFileName);
 
     const result = await storageClient.createFile(
         bucketId,
@@ -40,7 +40,8 @@ export async function uploadLogo(
         inputFile
     );
 
-    return `https://${endpoint}/storage/buckets/${bucketId}/files/${result.$id}/view?project=${projectId}`;
+    // Return the view URL which includes the fileId as the storage key
+    return `${endpoint}/storage/buckets/${bucketId}/files/${result.$id}/view?project=${projectId}`;
 }
 
 export async function deleteLogo(fileUrl: string): Promise<void> {

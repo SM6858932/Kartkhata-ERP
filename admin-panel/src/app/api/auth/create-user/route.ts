@@ -19,11 +19,19 @@ export async function POST(req: NextRequest) {
             disabled: false,
         });
 
+        // Set custom claims for Firestore rules
+        const safeRole = role || 'collector';
+        await auth().setCustomUserClaims(userRecord.uid, {
+            role: safeRole,
+            companyId: companyId || '',
+            assignedToVendorIds: assignedVendorIds || [],
+        });
+
         await db().collection('users').doc(userRecord.uid).set({
             name,
             phone,
             email: userEmail,
-            role: role || 'collector',
+            role: safeRole,
             companyId: companyId || '',
             active: true,
             assignedVendorIds: assignedVendorIds || [],
