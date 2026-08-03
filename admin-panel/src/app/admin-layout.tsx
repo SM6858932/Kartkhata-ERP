@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Building2, Users, LogOut, Menu, X, ShieldAlert, Database } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, Menu, X, ShieldAlert, Database, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { getSession, clearSession } from '@/lib/session';
@@ -34,9 +34,12 @@ const navItems = [
     navItems.push({ href: '/companies', label: 'Companies', icon: Building2 });
   }
 
-  if (canSeeStaff && session.companyId) {
+if (canSeeStaff && session.companyId) {
     navItems.push({ href: `/companies/${session.companyId}`, label: 'My Staff', icon: Users });
   }
+
+  // Settings available to all authenticated admin users
+  navItems.push({ href: '/settings', label: 'Settings', icon: Settings });
 
 // Audit log available to all authenticated admin users
   navItems.push({ href: '/audit', label: 'Audit Log', icon: ShieldAlert });

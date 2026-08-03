@@ -8,6 +8,7 @@ export interface StatementCompany {
     logoUrl?: string;
     address?: string;
     ownerMobile?: string;
+    ownerName?: string;
     phone?: string;
     email?: string;
 }
@@ -167,11 +168,13 @@ export function generateWhatsAppReceiptUrl(
 ): string {
     const cleanPhone = vendorPhone.replace(/[^0-9]/g, '');
     const displayName = safeName(company);
+    const ownerNameLine = company?.ownerName ? `\n*Owner:* ${company.ownerName}` : '';
     const addressLine = company?.address ? `\n*Address:* ${company.address}` : '';
     const contactLine = company?.ownerMobile
         ? `\n*Contact:* ${company.ownerMobile}`
         : (company?.phone ? `\n*Contact:* ${company.phone}` : '');
     const message = `🧾 *${displayName} — RENT RECEIPT*
+${ownerNameLine}
 ----------------------------------
 *Receipt No:* ${payment.serialNo}
 *Date:* ${formatINDate(payment.collectedAt)} ${formatINTime(payment.collectedAt)}
