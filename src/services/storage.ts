@@ -279,6 +279,17 @@ function setStored<T>(key: string, value: T): void {
 }
 
 /**
+ * Public helper used by useFirestoreSync to compute the company-scoped
+ * localStorage key for a given collection, so cloud-synced data never leaks
+ * across tenants. Returns the unscoped key when no company is active.
+ */
+export function scopedStorageKey(companyId: string | null | undefined, key: string): string {
+  if (!companyId) return key;
+  if (key === USERS_KEY || key === AUTH_SESSION_KEY || key === PARTNER_LEADS_KEY) return key;
+  return `${key}_${companyId}`;
+}
+
+/**
  * Company-scoped data collections must NEVER fall back to the demo seed data.
  * A company user with no cached list yet should see an empty list, not the
  * demo vendors/carts/agreements/payments of the global demo account.

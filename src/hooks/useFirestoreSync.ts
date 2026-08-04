@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Vendor, Cart, RentAgreement, Payment, AuditLog, AppNotification } from '../types';
 import { StorageService } from '../services/storage';
 import { setActiveCompany } from '../services/firestore';
+import { scopedStorageKey } from '../services/storage';
 import {
     VendorService, CartService, AgreementService,
     PaymentService, AuditLogService, NotificationService
@@ -49,11 +50,11 @@ export function useFirestoreSync(companyId?: string | null) {
         const unsubscribers: (() => void)[] = [];
 
         try {
-            // Vendors subscription
+// Vendors subscription
             unsubscribers.push(
                 VendorService.subscribe((data) => {
                     setVendors(data);
-                    localStorage.setItem('cartkhata_vendors', JSON.stringify(data));
+                    localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_vendors'), JSON.stringify(data));
                     setLastSyncTime(new Date());
                 })
             );
@@ -62,7 +63,7 @@ export function useFirestoreSync(companyId?: string | null) {
             unsubscribers.push(
                 CartService.subscribe((data) => {
                     setCarts(data);
-                    localStorage.setItem('cartkhata_carts', JSON.stringify(data));
+                    localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_carts'), JSON.stringify(data));
                 })
             );
 
@@ -70,7 +71,7 @@ export function useFirestoreSync(companyId?: string | null) {
             unsubscribers.push(
                 AgreementService.subscribe((data) => {
                     setAgreements(data);
-                    localStorage.setItem('cartkhata_agreements', JSON.stringify(data));
+                    localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_agreements'), JSON.stringify(data));
                 })
             );
 
@@ -78,7 +79,7 @@ export function useFirestoreSync(companyId?: string | null) {
             unsubscribers.push(
                 PaymentService.subscribe((data) => {
                     setPayments(data);
-                    localStorage.setItem('cartkhata_payments', JSON.stringify(data));
+                    localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_payments'), JSON.stringify(data));
                 })
             );
 
@@ -86,7 +87,7 @@ export function useFirestoreSync(companyId?: string | null) {
             unsubscribers.push(
                 NotificationService.subscribe((data) => {
                     setNotifications(data);
-                    localStorage.setItem('cartkhata_notifications', JSON.stringify(data));
+                    localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_notifications'), JSON.stringify(data));
                 })
             );
 
@@ -94,7 +95,7 @@ export function useFirestoreSync(companyId?: string | null) {
             unsubscribers.push(
                 AuditLogService.subscribe((data) => {
                     setAuditLogs(data);
-                    localStorage.setItem('cartkhata_audit_logs', JSON.stringify(data));
+                    localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_audit_logs'), JSON.stringify(data));
                 }, 100)
             );
 
@@ -128,13 +129,13 @@ export function useFirestoreSync(companyId?: string | null) {
             setAuditLogs(al);
             setNotifications(n);
 
-            // Update localStorage cache
-            localStorage.setItem('cartkhata_vendors', JSON.stringify(v));
-            localStorage.setItem('cartkhata_carts', JSON.stringify(c));
-            localStorage.setItem('cartkhata_agreements', JSON.stringify(a));
-            localStorage.setItem('cartkhata_payments', JSON.stringify(p));
-            localStorage.setItem('cartkhata_audit_logs', JSON.stringify(al));
-            localStorage.setItem('cartkhata_notifications', JSON.stringify(n));
+// Update localStorage cache (company-scoped)
+            localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_vendors'), JSON.stringify(v));
+            localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_carts'), JSON.stringify(c));
+            localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_agreements'), JSON.stringify(a));
+            localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_payments'), JSON.stringify(p));
+            localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_audit_logs'), JSON.stringify(al));
+            localStorage.setItem(scopedStorageKey(companyId, 'cartkhata_notifications'), JSON.stringify(n));
 
             setLastSyncTime(new Date());
         } catch (error) {
@@ -142,7 +143,7 @@ export function useFirestoreSync(companyId?: string | null) {
         } finally {
             setIsSyncing(false);
         }
-    }, []);
+    }, [companyId]);
 
     return {
         vendors,
