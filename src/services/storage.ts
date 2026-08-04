@@ -237,9 +237,33 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
   }
 ];
 
+/** Returns the companyId of the currently logged-in session (if any). */
+function getSessionCompanyId(): string | null {
+  try {
+    const raw = localStorage.getItem(AUTH_SESSION_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    return session?.companyId || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/**
+ * Scope a storage key by the active company so different tenants never share
+ * cached data on the same device. Auth session + users + partner leads stay
+ * global (they are not company-scoped).
+ */
+function scopedKey(key: string): string {
+  const companyId = getSessionCompanyId();
+  if (!companyId) return key;
+  if (key === USERS_KEY || key === AUTH_SESSION_KEY || key === PARTNER_LEADS_KEY) return key;
+  return `${key}_${companyId}`;
+}
+
 function getStored<T>(key: string, fallback: T): T {
   try {
-    const data = localStorage.getItem(key);
+    const data = localStorage.getItem(scopedKey(key));
     return data ? JSON.parse(data) : fallback;
   } catch (e) {
     return fallback;
@@ -248,10 +272,22 @@ function getStored<T>(key: string, fallback: T): T {
 
 function setStored<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(scopedKey(key), JSON.stringify(value));
   } catch (e) {
     console.error(`Error saving ${key} to storage:`, e);
   }
+}
+
+/**
+ * Company-scoped data collections must NEVER fall back to the demo seed data.
+ * A company user with no cached list yet should see an empty list, not the
+ * demo vendors/carts/agreements/payments of the global demo account.
+ */
+function emptyForCompany<T>(fallback: T): T {
+  const companyId = getSessionCompanyId();
+  if (!companyId) return fallback;
+  if (Array.isArray(fallback)) return [] as T;
+  return fallback;
 }
 
 export class StorageService {
@@ -335,9 +371,9 @@ export class StorageService {
     this.setSession(null);
   }
 
-  // Vendors
+// Vendors
   static getVendors(): Vendor[] {
-    return getStored<Vendor[]>(VENDORS_KEY, INITIAL_VENDORS);
+    return getStored<Vendor[]>(VENDORS_KEY, emptyForCompany(INITIAL_VENDORS));
   }
 
   static saveVendor(vendor: Vendor, currentUser: User): Vendor {
@@ -360,9 +396,9 @@ export class StorageService {
     return vendor;
   }
 
-  // Carts
+// Carts
   static getCarts(): Cart[] {
-    return getStored<Cart[]>(CARTS_KEY, INITIAL_CARTS);
+    return getStored<Cart[]>(CARTS_KEY, emptyForCompany(INITIAL_CARTS));
   }
 
   static saveCart(cart: Cart, currentUser: User): Cart {
@@ -419,9 +455,9 @@ export class StorageService {
     return cart;
   }
 
-  // Agreements
+// Agreements
   static getAgreements(): RentAgreement[] {
-    return getStored<RentAgreement[]>(AGREEMENTS_KEY, INITIAL_AGREEMENTS);
+    return getStored<RentAgreement[]>(AGREEMENTS_KEY, emptyForCompany(INITIAL_AGREEMENTS));
   }
 
   static saveAgreement(agreement: RentAgreement, currentUser: User): RentAgreement {
@@ -433,9 +469,9 @@ export class StorageService {
     return agreement;
   }
 
-  // Payments
+// Payments
   static getPayments(): Payment[] {
-    return getStored<Payment[]>(PAYMENTS_KEY, INITIAL_PAYMENTS);
+    return getStored<Payment[]>(PAYMENTS_KEY, emptyForCompany(INITIAL_PAYMENTS));
   }
 
   static addPayment(payment: Omit<Payment, 'id' | 'serialNo'>, currentUser: User): Payment {
@@ -483,9 +519,9 @@ export class StorageService {
     return newPayment;
   }
 
-  // Audit Logs
+// Audit Logs
   static getAuditLogs(): AuditLog[] {
-    return getStored<AuditLog[]>(AUDIT_LOGS_KEY, INITIAL_AUDIT_LOGS);
+    return getStored<AuditLog[]>(AUDIT_LOGS_KEY, emptyForCompany(INITIAL_AUDIT_LOGS));
   }
 
   static addAuditLog(log: Omit<AuditLog, 'id' | 'serialNo' | 'changedAt'>): AuditLog {
@@ -503,9 +539,9 @@ export class StorageService {
     return newLog;
   }
 
-  // Notifications
+// Notifications
   static getNotifications(): AppNotification[] {
-    return getStored<AppNotification[]>(NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS);
+    return getStored<AppNotification[]>(NOTIFICATIONS_KEY, emptyForCompany(INITIAL_NOTIFICATIONS));
   }
 
   static addNotification(notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'>): void {
